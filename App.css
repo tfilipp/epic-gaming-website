@@ -108,14 +108,17 @@ span:hover{
 
     height: 100vh;
     width: 100%;
-    background-color: #000;
+    background-image: url(screen.png);
+    background-size: cover;
+    background-attachment: fixed;
     color: white;
+    background-color: #000;
 }
 
 .section1{
     height: 90vh;
     width: 100%;
-    background-color: #000;
+    background-color: #000000;
     color: white;
 
 

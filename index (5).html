@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Social Network</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
+        canvas { width: 100vw; height: 100vh; }
+        .ui-layer {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .menu {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            pointer-events: auto;
+        }
+        .post-form {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+        }
+        input, textarea {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            padding: 10px;
+            color: white;
+            margin: 5px 0;
+            width: 200px;
+            border-radius: 5px;
+        }
+        button {
+            background: #4CAF50;
+            border: none;
+            padding: 10px 20px;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .profile {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            pointer-events: auto;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(76, 175, 80, 0.9);
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            opacity: 0;
+            transition: 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="ui-layer">
+        <div class="menu">
+            <h3>Cosmic Network</h3>
+            <button onclick="toggleView('feed')">Feed</button>
+            <button onclick="toggleView('explore')">Explore</button>
+        </div>
+        
+        <div class="post-form">
+            <input type="text" id="postTitle" placeholder="Post Title">
+            <textarea id="postContent" placeholder="What's on your cosmic mind?"></textarea>
+            <button onclick="createPost()">Share to Cosmos</button>
+        </div>
+
+        <div class="profile">
+            <h4>Space Explorer</h4>
+            <div>Level: <span id="userLevel">1</span></div>
+            <div>Posts: <span id="postCount">0</span></div>
+        </div>
+
+        <div class="notification" id="notification"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Enhanced Particle System
+        const galaxyGeometry = new THREE.BufferGeometry();
+        const galaxyMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+            },
+            vertexShader: `
+                uniform float time;
+                varying vec2 vUv;
+                varying vec3 vPosition;
+                void main() {
+                    vUv = uv;
+                    vPosition = position;
+                    vec3 p = position;
+                    p.x += sin(time * 0.5 + position.z * 2.0) * 0.5;
+                    p.y += cos(time * 0.5 + position.x * 2.0) * 0.5;
+                    vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                    gl_PointSize = 3.0 * (1.0 / -mvPosition.z);
+                }
+            `,
+            fragmentShader: `
+                uniform float time;
+                uniform vec2 resolution;
+                varying vec2 vUv;
+                varying vec3 vPosition;
+                
+                float noise(vec3 p) {
+                    return fract(sin(dot(p, vec3(12.9898, 78.233, 45.5432))) * 43758.5453);
+                }
+                
+                void main() {
+                    vec2 uv = gl_FragCoord.xy/resolution.xy;
+                    float n = noise(vec3(vPosition.xy * 10.0, time));
+                    vec3 color = vec3(0.5 + 0.5 * sin(time + vUv.x * 10.0),
+                                    0.5 + 0.5 * cos(time + vUv.y * 10.0),
+                                    0.5 + 0.5 * sin(time * 0.5));
+                    color += vec3(n) * 0.5;
+                    float dist = length(gl_PointCoord - vec2(0.5));
+                    float alpha = 1.0 - smoothstep(0.4, 0.5, dist);
+                    gl_FragColor = vec4(color, alpha);
+                }
+            `,
+            transparent: true
+        });
+
+        const particlesCount = 100000;
+        const positions = new Float32Array(particlesCount * 3);
+        for(let i = 0; i < particlesCount * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 200;
+        }
+        galaxyGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particles = new THREE.Points(galaxyGeometry, galaxyMaterial);
+        scene.add(particles);
+
+        // Posts Container
+        const posts = [];
+        const postGeometry = new THREE.BoxGeometry(5, 5, 0.2);
+        const postMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying vec3 vPosition;
+                uniform float time;
+                void main() {
+                    vUv = uv;
+                    vPosition = position;
+                    vec3 pos = position;
+                    pos.z += sin(time + position.x * 0.5) * 0.2;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float time;
+                varying vec2 vUv;
+                varying vec3 vPosition;
+                void main() {
+                    vec3 color = vec3(0.5 + 0.5 * sin(vUv.x * 10.0 + time),
+                                    0.5 + 0.5 * cos(vUv.y * 10.0 + time),
+                                    0.8);
+                    float edge = smoothstep(0.0, 0.1, vUv.x) * 
+                                smoothstep(0.0, 0.1, vUv.y) * 
+                                smoothstep(0.0, 0.1, 1.0 - vUv.x) * 
+                                smoothstep(0.0, 0.1, 1.0 - vUv.y);
+                    gl_FragColor = vec4(color, 0.7 * edge);
+                }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+
+        camera.position.z = 50;
+
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth / 2) * 0.005;
+            mouseY = (e.clientY - window.innerHeight / 2) * 0.005;
+        });
+
+        const clock = new THREE.Clock();
+        let currentView = 'feed';
+
+        function createPost() {
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            
+            if (!title || !content) return;
+
+            const post = new THREE.Mesh(postGeometry, postMaterial.clone());
+            post.position.set(
+                (Math.random() - 0.5) * 50,
+                (Math.random() - 0.5) * 50,
+                (Math.random() - 0.5) * 20
+            );
+            post.userData = { title, content, likes: 0 };
+            posts.push(post);
+            scene.add(post);
+
+            showNotification('Post shared to the cosmos! 🚀');
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+            updatePostCount();
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.opacity = '1';
+            setTimeout(() => {
+                notification.style.opacity = '0';
+            }, 3000);
+        }
+
+        function updatePostCount() {
+            document.getElementById('postCount').textContent = posts.length;
+            document.getElementById('userLevel').textContent = Math.floor(posts.length / 5) + 1;
+        }
+
+        function toggleView(view) {
+            currentView = view;
+            const targetZ = view === 'feed' ? 50 : 150;
+            gsap.to(camera.position, {
+                z: targetZ,
+                duration: 1,
+                ease: 'power2.inOut'
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            particles.rotation.x += 0.0003;
+            particles.rotation.y += 0.0005;
+
+            posts.forEach((post, i) => {
+                post.rotation.x = Math.sin(time * 0.5 + i) * 0.1;
+                post.rotation.y = Math.cos(time * 0.3 + i) * 0.1;
+                post.position.z += Math.sin(time + i) * 0.02;
+            });
+
+            camera.position.x += (mouseX - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+
+            galaxyMaterial.uniforms.time.value = time;
+            posts.forEach(post => {
+                post.material.uniforms.time.value = time;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            galaxyMaterial.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+        });
+
+        document.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>
