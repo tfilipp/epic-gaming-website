@@ -1,0 +1,113 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>canvas</title>
+    <link rel="stylesheet" href="App.css">
+</head>
+<body>
+    <div class="boba">
+        <a href="https://www.youtube.com/watch?v=eX0DGvLl-94" onclick="playRoar()"> ютуб </a>
+        <a href="#" onclick="playRoar()"> заказать поесть </a>
+        <a href="#" onclick="playRoar()"> кыр сосичка </a>
+        <a href="#" onclick="playRoar()"> гипоталамус </a>
+    </div>
+    <div class="headerParking"></div>
+    <div class="section">
+        <h1>
+            <br>
+            ПК КЛУБ 
+            <br>
+            <span class="rainbowText">КОЧЕРГА</span>
+        </h1>
+        <br>
+        <a class="hh" onclick="playLaugh()">не надо</a>
+        <br>
+    </div>
+    <div class="headerParking"></div>
+    <div class="section1 centered">
+        <h2>кочерга запрещает</h2>
+        <div class="card">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Neus1.jpg/250px-Neus1.jpg" alt="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Neus1.jpg/250px-Neus1.jpg">
+            <p class="cardh">нюхать</p>
+            <p class="cardtype">запрещено в клуб</p>
+        </div>
+        <div class="card">
+            <img src="https://i.ytimg.com/vi/KX1Ux2o3Abs/hq720.jpg?sqp=-oaymwEXCK4FEIIDSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLBq36LFsZ0TF_2wYEZkDWRnkDAkGQ" alt="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Neus1.jpg/250px-Neus1.jpg">
+            <p class="cardh">кушать</p>
+            <p class="cardtype">запрещено в клуб</p>
+        </div>
+        <div class="card">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9P5NuOo6QZKv7Z3rtIfVIr8_TxyWdBfvFYg&s" alt="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Neus1.jpg/250px-Neus1.jpg">
+            <p class="cardh">играть</p>
+            <p class="cardtype">запрещено в клуб</p>
+            <p class="cardtype">(нету денег на пк поэтому там пеньтиум 4)</p>
+        </div>
+    </div>
+    <div class="headerParking"></div>
+    <div class="section1 centered">
+        <h2>кочерга allows</h2>
+        <div class="card">
+            <img src="https://img-b.udemycdn.com/course/750x422/793796_0e89_2.jpg" alt="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Neus1.jpg/250px-Neus1.jpg">
+            <p class="cardh">ексель</p>
+            <p class="cardtype">очень хороши програма</p>
+        </div>
+        <div class="card">
+            <img src="https://i.ytimg.com/vi/JiUC2olti90/sddefault.jpg" alt="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Neus1.jpg/250px-Neus1.jpg">
+            <p class="cardh">детей</p>
+            <p class="cardtype">детей</p>
+        </div>
+        <div class="card">
+            <img src="https://media1.tenor.com/m/wphIipSQJIYAAAAd/jesus-ballin-mars-bars.gif" alt="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Neus1.jpg/250px-Neus1.jpg">
+            <p class="cardh">INHERIT</p>
+            <p class="cardtype">наследство</p>
+        </div>
+    </div>
+</body>
+<script>
+    
+function playRoar() {
+  var audio = new Audio('https://cdn.pixabay.com/download/audio/2022/01/07/audio_d42d80c8e4.mp3?filename=stop-13692.mp3');
+  audio.play();
+}
+
+function playLaugh() {
+  var audio1 = new Audio('C:/Users/start/Downloads/bugaga.mp3');
+  audio1.play();
+}
+
+window.addEventListener("load", function() {
+  var elements = document.getElementsByClassName("rainbowText");
+
+  for (let i = 0; i < elements.length; i++) {
+    let element = elements[i];
+    let originalText = element.innerText; // Сохраняем оригинальный текст
+
+    // Разделяем текст на отдельные символы, оборачивая каждый в <span>
+    element.innerHTML = "";
+    for (let j = 0; j < originalText.length; j++) {
+      let charSpan = document.createElement("span");
+      charSpan.innerText = originalText[j];
+      charSpan.style.color = "#fff"; // Изначально белый цвет
+      element.appendChild(charSpan);
+    }
+
+    // Добавляем обработчик события наведения мыши
+    element.addEventListener("mouseenter", function() {
+      let spans = element.getElementsByTagName("span");
+      for (let k = 0; k < spans.length; k++) {
+        spans[k].style.color = `hsl(${360 * k / spans.length}, 80%, 50%)`;
+      }
+    });
+
+    // Добавляем обработчик события убирания мыши
+    element.addEventListener("mouseleave", function() {
+      let spans = element.getElementsByTagName("span");
+      for (let k = 0; k < spans.length; k++) {
+        spans[k].style.color = "#fff";
+      }
+    });
+  }
+});
+</script>
+</html>
